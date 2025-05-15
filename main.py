@@ -80,7 +80,7 @@ else:
     st.info("No securities selected yet or no data available.")
 
 
-# Found on Stack overflow
+# Source: https://discuss.streamlit.io/t/close-streamlit-app-with-button-click/35132
 exit_app = st._bottom.button("Shut Down")
 if exit_app:
     # Give a bit of delay for user experience
