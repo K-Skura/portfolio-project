@@ -8,11 +8,11 @@ import psutil
 
 
 class Security:
-    def __init__(self,ticker, sec_type = "Stock"):
+    def __init__(self,ticker, sec_type = "Stock", quantity = 1):
         self.ticker = ticker
         self.sec_type = sec_type    #As for now all will be Stock
         self.data  = None          #It will be fetched with yf data
-        
+        self.quantity = quantity
 
     def upload_yf_data(self): 
         try:
@@ -43,18 +43,23 @@ with st.container(border = True):
 
 securities_tickers = [item.split(" - ")[0] for item in opt] 
 
-st.write("You selected the following Tickers")
-
-for ticker in securities_tickers:
-    st.write(ticker)
-
 
 # Apply the class 
 portfolio = [Security(ticker= ticker) for ticker in securities_tickers]
 
+#Download the data for each security
 for sec in portfolio:
     sec.upload_yf_data()
-    #create an object using class Securities that download yf data for each security
+
+
+#Ask for the quantity, can be below the downloading of data 
+
+st.write("You selected the following Tickers, now please add the quantity")
+
+for sec in portfolio:
+    sec.quantity = st.number_input(
+        f"{sec.ticker} quantity", min_value = 0, step = 1
+    )
 
 # For the ease of use create a dic with tickers as keys and df as values
 
@@ -75,9 +80,24 @@ for ticker,df in portfolio_data.items():
 if all_close:
     close_prices = pd.concat(all_close, axis=1)
     st.line_chart(close_prices)
-    st.dataframe(close_prices)
 else:
     st.info("No securities selected yet or no data available.")
+
+portfolio_value = 0
+
+for sec in portfolio:
+    if sec.data is not None:
+        try: 
+            latest_price = sec.data["Close"].iloc[-1]
+            value = latest_price * sec.quantity
+            portfolio_value += value
+        except KeyError:
+            print("There was a problem with calculating the value per security. ")
+
+st.write(f"Total value of your portfolio is: {portfolio_value}")
+#! Error to correct
+# Printed value: Total value of your portfolio is: Ticker AAPL 422.519989 Name: 2025-05-16 00:00:00, dtype: float64
+# If selected more securities: Total value of your portfolio is: Ticker AAPL NaN Name: 2025-05-16 00:00:00, dtype: float64
 
 
 # Source: https://discuss.streamlit.io/t/close-streamlit-app-with-button-click/35132
