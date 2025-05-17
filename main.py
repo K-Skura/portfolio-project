@@ -88,16 +88,13 @@ portfolio_value = 0
 for sec in portfolio:
     if sec.data is not None:
         try: 
-            latest_price = sec.data["Close"].iloc[-1]
+            latest_price = sec.data["Close"].iloc[-1].item() #Error occured due to the returning the whole single element series - repaired using item()
             value = latest_price * sec.quantity
             portfolio_value += value
         except KeyError:
             print("There was a problem with calculating the value per security. ")
 
 st.write(f"Total value of your portfolio is: {portfolio_value}")
-#! Error to correct
-# Printed value: Total value of your portfolio is: Ticker AAPL 422.519989 Name: 2025-05-16 00:00:00, dtype: float64
-# If selected more securities: Total value of your portfolio is: Ticker AAPL NaN Name: 2025-05-16 00:00:00, dtype: float64
 
 
 # Source: https://discuss.streamlit.io/t/close-streamlit-app-with-button-click/35132
