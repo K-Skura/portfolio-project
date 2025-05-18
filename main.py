@@ -45,10 +45,10 @@ securities_tickers = [item.split(" - ")[0] for item in opt]
 
 
 # Apply the class 
-portfolio = [Security(ticker= ticker) for ticker in securities_tickers]
+portfolio = {ticker: Security(ticker = ticker) for ticker in securities_tickers}
 
 #Download the data for each security
-for sec in portfolio:
+for sec in portfolio.values():
     sec.upload_yf_data()
 
 
@@ -56,36 +56,28 @@ for sec in portfolio:
 
 st.write("You selected the following Tickers, now please add the quantity")
 
-for sec in portfolio:
+for sec in portfolio.values():
     sec.quantity = st.number_input(
-        f"{sec.ticker} quantity", min_value = 0, step = 1
+        f"{sec.ticker} quantity", min_value = 0
     )
 
-# For the ease of use create a dic with tickers as keys and df as values
+try:
+    hist_performance = pd.concat({
+        ticker: sec.data["Close"]
+        for ticker, sec in portfolio.items()
+        if sec.data is not None and not sec.data.empty and "Close" in sec.data.columns 
+    }, 
+    axis = 1)
+    hist_performance.columns = hist_performance.columns.get_level_values(0) # Added due to the problem with multiindexing
+    st.line_chart(hist_performance)
 
-portfolio_data = {sec.ticker:sec.data for sec in portfolio if sec.data is not None}
-
-all_close = []
-
-for ticker,df in portfolio_data.items():
-    if df is not None and not df.empty:
-        try:
-            close = df["Close"].copy()
-            close.name = ticker
-            all_close.append(close)
-        except KeyError:
-            print(f"{ticker} does not have a 'close' column.")
-
-
-if all_close:
-    close_prices = pd.concat(all_close, axis=1)
-    st.line_chart(close_prices)
-else:
+except ValueError:
     st.info("No securities selected yet or no data available.")
+
 
 portfolio_value = 0
 
-for sec in portfolio:
+for sec in portfolio.values():
     if sec.data is not None:
         try: 
             latest_price = sec.data["Close"].iloc[-1].item() #Error occured due to the returning the whole single element series - repaired using item()
